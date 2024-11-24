@@ -232,7 +232,7 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
     # --preload-file resources   # specify a resources folder for data compilation
     # --source-map-base          # allow debugging in browser with source map
     LDFLAGS += -s USE_GLFW=3 -s TOTAL_MEMORY=$(BUILD_WEB_HEAP_SIZE) -s STACK_SIZE=$(BUILD_WEB_STACK_SIZE) -s FORCE_FILESYSTEM=1
-    
+
     # Build using asyncify
     ifeq ($(BUILD_WEB_ASYNCIFY),TRUE)
         LDFLAGS += -s ASYNCIFY -s ASYNCIFY_STACK_SIZE=$(BUILD_WEB_ASYNCIFY_STACK_SIZE)
@@ -310,7 +310,8 @@ endif
 
 # Define all object files from source files
 #------------------------------------------------------------------------------------------------
-OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
+OBJS = $(addprefix $(PROJECT_BUILD_PATH)/,$(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES)))
+
 
 # Define processes to execute
 #------------------------------------------------------------------------------------------------
@@ -324,7 +325,7 @@ $(PROJECT_NAME): $(OBJS)
 
 # Compile source files
 # NOTE: This pattern will compile every module defined on $(OBJS)
-%.o: %.c
+$(PROJECT_BUILD_PATH)/%.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Clean everything
