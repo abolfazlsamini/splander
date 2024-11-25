@@ -1,4 +1,11 @@
+#if defined(_WIN64)
 #include <C:\raylib\raylib\src\raylib.h>
+
+#elif defined(_WIN32)
+#include <C:\raylib\raylib\src\raylib.h>
+#else
+#include "raylib.h"
+#endif
 
 Camera camera = { 0 };
 Vector3 cubePosition = { 0 };
