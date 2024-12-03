@@ -310,7 +310,10 @@ endif
 
 # Define all object files from source files
 #------------------------------------------------------------------------------------------------
-OBJS = $(addprefix $(PROJECT_BUILD_PATH)/,$(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES)))
+rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
+SRC = $(call rwildcard,./,*.c)
+OBJS = $(patsubst %.c, $(PROJECT_BUILD_PATH)/%.o, $(SRC))
+# OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
 
 
 # Define processes to execute
