@@ -7,11 +7,12 @@ if sys.platform == 'win32':
     CC = "Cl.exe"
 
 PROJECT_NAME = "splander"
+PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
 SRC_PATH = "src"
 BUILD_PATH = "build"
 
 if sys.platform == 'win32':
-    EXT = 'exe'
+    EXT = '.exe'
 else:
     EXT = ""
 
@@ -45,20 +46,20 @@ else:
 
 SRC_FILES = []
 for root, dirs, files in os.walk(SRC_PATH):
-    dir_path = os.path.dirname(os.path.realpath(__file__))
     for file in files:
         if file.endswith(".c"):
-            src = os.path.join(root, file)
+            src = os.path.join(PROJECT_DIR, root, file)
             SRC_FILES.append(src)
+
+TARGET_EXE = os.path.join(PROJECT_DIR, BUILD_PATH, f"{PROJECT_NAME}{EXT}")
 
 # $(CC) -o $(PROJECT_BUILD_PATH)/$(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS)
 # $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
-cmd = [CC] + SRC_FILES + ["-o", f"{BUILD_PATH}/{PROJECT_NAME}{EXT}"]
+cmd = [CC] + SRC_FILES + ["-o", TARGET_EXE]
 cmd += CFLAGS + INCLUDE_PATHS + LDFLAGS + LDLIBS + ["-DPLATFORM_DESKTOP"]
 
 if not os.path.exists(BUILD_PATH):
     os.makedirs(BUILD_PATH)
 
-print(dir_path)
 print(cmd)
 subprocess.run(cmd)
