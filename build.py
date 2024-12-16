@@ -4,7 +4,11 @@ import subprocess
 
 CC = "gcc"
 if sys.platform == 'win32':
-    CC = "Cl.exe"
+    print()
+    print("[WARNING]: Set MINGW path in envitemet variables")
+    print("Default path: C:\\raylib\\w64devkit\\bin")
+    print()
+    CC = "gcc"
 
 PROJECT_NAME = "splander"
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -31,7 +35,8 @@ INCLUDE_PATHS = ["-I.", "-Iexternal", f"-I{RAYLIB_INCLUDE_PATH}"]
 
 LDFLAGS = ["-L.", f"-L{RAYLIB_LIB_PATH}"]
 if sys.platform == 'win32':
-    LDFLAGS += f"{SRC_PATH}/{PROJECT_NAME}.rc.data"
+    # LDFLAGS += f"{SRC_PATH}/{PROJECT_NAME}.rc.data"
+    pass
 
 if sys.platform == 'win32':
     LDLIBS = ["-lraylib", "-lopengl32", "-lgdi32", "-lwinmm", "-lcomdlg32"]
