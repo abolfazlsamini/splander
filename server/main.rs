@@ -10,7 +10,8 @@ async fn main() -> io::Result<()> {
 
     loop {
         let (len, addr) = socket.recv_from(&mut buf).await?;
-        println!("{:?} bytes recevied from {:?}",len , addr);
+        let received_data = String::from_utf8_lossy(&buf[..len]);
+        println!("{:?} recevied from {:?}", received_data, addr);
         users_map.entry(addr.to_string()).or_insert(last_id);
         last_id += 1;
 
