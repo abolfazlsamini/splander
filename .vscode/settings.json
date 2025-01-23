@@ -1,0 +1,10 @@
+{
+  "files.associations": {
+    "stdio.h": "c",
+    "stdbool.h": "c",
+    "winsock2.h": "c",
+    "gui.h": "c",
+    "*.m": "c"
+  },
+  "editor.formatOnSave": true
+}

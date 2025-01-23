@@ -11,7 +11,7 @@ if len(sys.argv) > 1:
     else:
         msgs = msgs2
 
-server_addr_port = ("0.0.0.0", 8080)
+server_addr_port = ("127.0.0.1", 8080)
 buffer_size = 1024
 
 udp_client_scoket = socket.socket(

@@ -39,7 +39,7 @@ if sys.platform == 'win32':
     pass
 
 if sys.platform == 'win32':
-    LDLIBS = ["-lraylib", "-lopengl32", "-lgdi32", "-lwinmm", "-lcomdlg32"]
+    LDLIBS = ["-lraylib", "-lopengl32", "-lgdi32", "-lwinmm", "-lcomdlg32", "-lws2_32"]
     LDLIBS += ["-static", "-lpthread", "-lole32"]
 else:
     LDLIBS = ["-lraylib", "-lGL", "-lm", "-lpthread", "-ldl", "-lrt"]
