@@ -7,10 +7,11 @@
 #define NOGDI	 // Exclude GDI symbols (e.g., Rectangle)
 #define NOUSER	 // Exclude User symbols (e.g., ShowCursor)
 #include <winsock2.h>
-// #define CloseWindow Raylib_CloseWindow
+#include <ws2tcpip.h>
 #include <C:\raylib\raylib\src\raylib.h>
 // #undef CloseWindow
 #else
+#include <arpa/inet.h>
 #include "raylib.h"
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -109,7 +110,7 @@ int main()
 
 	InitWindow(screenWidth, screenHeight, "Splander");
 	SetExitKey(KEY_F1);
-	SetTargetFPS(60);
+	SetTargetFPS(20);
 
 	GameState gs = {0};
 	GUIInit(&gs.gui);
@@ -171,10 +172,6 @@ time_t currentTime;
 static void UpdateServer(GameState *gs)
 {
 	time(&currentTime);
-	struct tm *localTime = localtime(&currentTime);
-	int hour = localTime->tm_hour;
-	int minute = localTime->tm_min;
-	int second = localTime->tm_sec;
 
 #if defined(_WIN32) || defined(_WIN64)
 	mingw_gettimeofday(&milli_time, NULL);
@@ -182,60 +179,65 @@ static void UpdateServer(GameState *gs)
 	gettimeofday(&milli_time, NULL);
 #endif
 	millisec = (double)(milli_time.tv_usec);
-	// printf("Current time: %02d:%02d:%02d:%f\n", hour, minute, second, millisec);
 
 	char send_data[240];
 	char sent_time_str[100];
-	// TODO: change this to EPOCH TIME
-	sprintf(sent_time_str, "%02d:%02d:%02d:%.2f", hour, minute, second, millisec);
-	// name:time:position
+
+	long long epoch_time = (long long)currentTime * 1000 + (long long)millisec;
+	sprintf(sent_time_str, "%lld", epoch_time);
+	// name,time,position
 	sprintf(send_data, "%s,%s,%.2f:%.2f", name, sent_time_str, gs->player.pos.x, gs->player.pos.y);
 	printf("data sent: %s\n", send_data);
 
-	// strcat(send_data, name);
-	// strcat(send_data, ",");
-	// strcat(send_data, sent_time_str);
-	// strcat(send_data, ",");
-
-	// char player_pos_str[40];
-	// sprintf(player_pos_str, "%.2f:%.2f", gs->player.pos.x, gs->player.pos.y);
-	// strcat(send_data, player_pos_str);
-	// strcat(send_data, x);
-	// strcat(send_data, ":");
-	// strcat(send_data, y);
-
 	// put all syncy data here  V
-	if (sendto(client_socket, send_data, sizeof(send_data) / sizeof(char), 0, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
+	if (sendto(client_socket, send_data, (int)strlen(send_data), 0, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
 	{
 		printf("sendto() failed. Error\n");
 		close_socket(client_socket);
 	}
 }
-// static void UpdateClient()
-// {
-// 	char receivdata[] = "name:time:position"; // only receive the other player's pos
-// 	char *name, *time, *position;
-// 	name = strtok(receivdata, ":");
-// 	time = strtok(receivdata, ":");
-// 	position = strtok(receivdata, ":");
+long long prev_time_from_server = 0;
+static void UpdateClient(GameState *gs)
+{
+	client_socket = socket(AF_INET, SOCK_DGRAM, 0);
+	if (client_socket == INVALID_SOCKET)
+	{
+		printf("socket() failed. Error: %d\n", WSAGetLastError());
+	}
 
-// 	// if date > dateprev
+	int recv_len;
+	struct sockaddr_in client_addr;
+	socklen_t client_len = sizeof(server);
+	if ((recv_len = recvfrom(client_socket, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&server, &client_len)) == SOCKET_ERROR)
+	{
+		// printf("recvfrom() failed. Error: %d\n", WSAGetLastError());
+	}
+	else
+	{
+		buffer[recv_len] = '\0'; // Null-terminate the string
+		printf("Recieved: %s\n", buffer);
+	}
 
-// 	/*
-// 	   int server_len = sizeof(server);
-// 	   int recv_len;
-// 	   if ((recv_len = recvfrom(client_socket, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&server, &server_len)) == SOCKET_ERROR) {
-// 	   printf("recvfrom() failed. Error: %d\n", WSAGetLastError());
-// 	   } else {
-// 	   buffer[recv_len] = '\0'; // Null-terminate the string
-// 	   printf("Response from server: %s\n", buffer);
-// 	   }
-// 	   */
-// }
+	char receivdata[] = "m,1234654654,1:0;s,132165486768,35:35";
+	char name[100], position[100];
+	long long time;
+
+	sscanf(receivdata, "%[^,],%lld,%s", name, &time, position);
+
+	float x, y;
+	if (prev_time_from_server <= 0)
+	{
+		sscanf(position, "%f:%f", &x, &y);
+		// printf("x = %.2f\n", x);
+		// printf("y = %.2f\n", y);
+		gs->player2.pos.x = x;
+		gs->player2.pos.y = y;
+	}
+}
 // Update and draw game frame
 static void UpdateDrawFrame(GameState *gs)
 {
-	// UpdateClient();
+	UpdateClient(gs);
 	if (!gs->is_paused)
 	{
 		if (IsKeyDown(KEY_RIGHT))
