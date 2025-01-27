@@ -106,11 +106,6 @@ int main()
 	server.sin_addr.s_addr = inet_addr(SERVER_IP);
 	server.sin_port = htons(PORT);
 
-    if (bind(client_socket, (struct sockaddr*)&server, sizeof(server)) < 0) {
-        printf("Couldn't bind to the port\n");
-        return -1;
-    }
-
 	SetRandomSeed(0x69420);
 	const int screenWidth = 800;
 	const int screenHeight = 600;
@@ -206,6 +201,10 @@ static void UpdateServer(GameState *gs)
 long long prev_time_from_server = 0;
 static void UpdateClient(GameState *gs)
 {
+	if (sendto(client_socket, "hello\n", 6, 0, (struct sockaddr *)&server, sizeof(server)) < 0)
+	{
+		printf("sendto() failed. Error\n");
+	}
 	int recv_len;
 	struct sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
