@@ -1,6 +1,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "gui.h"
+#include <time.h>
 #if defined(_WIN32) || defined(_WIN64)
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX // Prevent Windows from defining min/max macros
@@ -11,7 +13,6 @@
 #include <C:\raylib\raylib\src\raylib.h>
 // #undef CloseWindow
 #else
-#include <arpa/inet.h>
 #include "raylib.h"
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -21,8 +22,6 @@
 #include <string.h>
 #define SOCKET_ERROR -1
 #endif
-#include "gui.h"
-#include <time.h>
 // #pragma comment(lib, "ws2_32.lib") // Link with ws2_32.lib
 
 #define SERVER_IP "127.0.0.1"
@@ -49,7 +48,8 @@ static void UpdateDrawFrame(GameState *gs);
 #if defined(_WIN32) || defined(_WIN64)
 SOCKET client_socket;
 #else
-int client_socket;
+typedef int SOCKET;
+SOCKET client_socket;
 #endif
 struct sockaddr_in server;
 
@@ -72,11 +72,13 @@ void init_socket()
 	}
 #else
 	// Create a socket
-	if ((client_socket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
-	{
-		printf("Failed to create socket. Error: %m\n");
-		exit(1);
-	}
+    client_socket = socket(AF_INET, SOCK_DGRAM, 0);
+    
+    if(client_socket < 0){
+        printf("Error while creating socket\n");
+        exit(1);
+    }
+    printf("Socket created successfully\n");
 #endif
 }
 
@@ -103,6 +105,11 @@ int main()
 	server.sin_family = AF_INET;
 	server.sin_addr.s_addr = inet_addr(SERVER_IP);
 	server.sin_port = htons(PORT);
+
+    if (bind(client_socket, (struct sockaddr*)&server, sizeof(server)) < 0) {
+        printf("Couldn't bind to the port\n");
+        return -1;
+    }
 
 	SetRandomSeed(0x69420);
 	const int screenWidth = 800;
@@ -199,18 +206,12 @@ static void UpdateServer(GameState *gs)
 long long prev_time_from_server = 0;
 static void UpdateClient(GameState *gs)
 {
-	client_socket = socket(AF_INET, SOCK_DGRAM, 0);
-	if (client_socket == INVALID_SOCKET)
-	{
-		printf("socket() failed. Error: %d\n", WSAGetLastError());
-	}
-
 	int recv_len;
 	struct sockaddr_in client_addr;
-	socklen_t client_len = sizeof(server);
-	if ((recv_len = recvfrom(client_socket, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&server, &client_len)) == SOCKET_ERROR)
+	socklen_t client_len = sizeof(client_addr);
+	if ((recv_len = recvfrom(client_socket, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&client_addr, &client_len)) <= 0)
 	{
-		// printf("recvfrom() failed. Error: %d\n", WSAGetLastError());
+		printf("recvfrom() failed. Error\n");
 	}
 	else
 	{
