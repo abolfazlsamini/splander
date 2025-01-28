@@ -72,13 +72,14 @@ void init_socket()
 	}
 #else
 	// Create a socket
-    client_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    
-    if(client_socket < 0){
-        printf("Error while creating socket\n");
-        exit(1);
-    }
-    printf("Socket created successfully\n");
+	client_socket = socket(AF_INET, SOCK_DGRAM, 0);
+
+	if (client_socket < 0)
+	{
+		printf("Error while creating socket\n");
+		exit(1);
+	}
+	printf("Socket created successfully\n");
 #endif
 }
 
@@ -112,7 +113,7 @@ int main()
 
 	InitWindow(screenWidth, screenHeight, "Splander");
 	SetExitKey(KEY_F1);
-	SetTargetFPS(20);
+	SetTargetFPS(60);
 
 	GameState gs = {0};
 	GUIInit(&gs.gui);
@@ -144,7 +145,6 @@ void GUIFunctionEval(GameState *gs)
 		switch (gs->gui.sel_button)
 		{
 		case 0:
-			gs->is_paused = !gs->is_paused;
 			char new_name[16];
 			strcpy(new_name, "name:");
 			strcat(new_name, name);
@@ -153,6 +153,7 @@ void GUIFunctionEval(GameState *gs)
 				printf("sendto() failed. Error\n");
 				close_socket(client_socket);
 			}
+			gs->is_paused = !gs->is_paused;
 			break;
 		case 1:
 		case 2:
@@ -171,6 +172,7 @@ void GUIFunctionEval(GameState *gs)
 struct timeval milli_time;
 double millisec = 0;
 time_t currentTime;
+
 static void UpdateServer(GameState *gs)
 {
 	time(&currentTime);
@@ -201,10 +203,6 @@ static void UpdateServer(GameState *gs)
 long long prev_time_from_server = 0;
 static void UpdateClient(GameState *gs)
 {
-	if (sendto(client_socket, "hello\n", 6, 0, (struct sockaddr *)&server, sizeof(server)) < 0)
-	{
-		printf("sendto() failed. Error\n");
-	}
 	int recv_len;
 	struct sockaddr_in client_addr;
 	socklen_t client_len = sizeof(client_addr);
@@ -234,10 +232,16 @@ static void UpdateClient(GameState *gs)
 		gs->player2.pos.y = y;
 	}
 }
+int counter = 0;
 // Update and draw game frame
 static void UpdateDrawFrame(GameState *gs)
 {
-	UpdateClient(gs);
+	counter++;
+	if (counter % 10 == 0)
+	{
+		UpdateServer(gs);
+		UpdateClient(gs);
+	}
 	if (!gs->is_paused)
 	{
 		if (IsKeyDown(KEY_RIGHT))
@@ -249,11 +253,11 @@ static void UpdateDrawFrame(GameState *gs)
 		if (IsKeyDown(KEY_DOWN))
 			gs->player.pos.y += 2.0f;
 
-		if (IsKeyDown(KEY_RIGHT) ||
-			IsKeyDown(KEY_LEFT) ||
-			IsKeyDown(KEY_UP) ||
-			IsKeyDown(KEY_DOWN))
-			UpdateServer(gs);
+		// if (IsKeyDown(KEY_RIGHT) ||
+		// 	IsKeyDown(KEY_LEFT) ||
+		// 	IsKeyDown(KEY_UP) ||
+		// 	IsKeyDown(KEY_DOWN))
+		// 	UpdateServer(gs);
 	}
 
 	else

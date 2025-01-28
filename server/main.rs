@@ -90,7 +90,7 @@ async fn main() -> io::Result<()> {
             send_data = format!("{};{}", player_1_data, player_2_data);
 
             socket.send_to(send_data.as_bytes(), &addr).await?;
-
+            
             println!("send data: {:?}", send_data);
             
         }
