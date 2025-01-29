@@ -53,6 +53,9 @@ SOCKET client_socket;
 #endif
 struct sockaddr_in server;
 
+char buffer[BUFFER_SIZE];
+char NAME[] = "Sam";
+
 void init_socket()
 {
 #if defined(_WIN32) || defined(_WIN64)
@@ -96,8 +99,6 @@ void close_socket(int c_socket)
 }
 #endif
 
-char buffer[BUFFER_SIZE];
-char name[] = "Sam";
 int main()
 {
 	// Initialize sock
@@ -147,7 +148,7 @@ void GUIFunctionEval(GameState *gs)
 		case 0:
 			char new_name[16];
 			strcpy(new_name, "name:");
-			strcat(new_name, name);
+			strcat(new_name, NAME);
 			if (sendto(client_socket, new_name, 8, 0, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
 			{
 				printf("sendto() failed. Error\n");
@@ -190,7 +191,7 @@ static void UpdateServer(GameState *gs)
 	long long epoch_time = (long long)currentTime * 1000 + (long long)millisec;
 	sprintf(sent_time_str, "%lld", epoch_time);
 	// name,time,position
-	sprintf(send_data, "%s,%s,%.2f:%.2f", name, sent_time_str, gs->player.pos.x, gs->player.pos.y);
+	sprintf(send_data, "%s,%s,%.2f:%.2f", NAME, sent_time_str, gs->player.pos.x, gs->player.pos.y);
 	printf("data sent: %s\n", send_data);
 
 	// put all syncy data here  V
@@ -215,21 +216,36 @@ static void UpdateClient(GameState *gs)
 		buffer[recv_len] = '\0'; // Null-terminate the string
 		printf("Recieved: %s\n", buffer);
 	}
-
-	char receivdata[] = "m,1234654654,1:0;s,132165486768,35:35";
+	// buffer = m,1234654654,1:0;s,132165486768,35:35
 	char name[100], position[100];
 	long long time;
 
-	sscanf(receivdata, "%[^,],%lld,%s", name, &time, position);
+	char name2[100], position2[100];
+	long long time2;
 
+	int resolts = sscanf(buffer, "%[^,],%lld,%[^;];%[^,],%lld,%s", name, &time, position, name2, &time2, position2);
+	if (resolts < 4)
+		return;
 	float x, y;
 	if (prev_time_from_server <= 0)
 	{
-		sscanf(position, "%f:%f", &x, &y);
-		// printf("x = %.2f\n", x);
-		// printf("y = %.2f\n", y);
-		gs->player2.pos.x = x;
-		gs->player2.pos.y = y;
+		if (strcmp(name, NAME) != 0)
+		{
+
+			sscanf(position, "%f:%f", &x, &y);
+			// printf("x = %.2f\n", x);
+			// printf("y = %.2f\n", y);
+			gs->player2.pos.x = x;
+			gs->player2.pos.y = y;
+		}
+		else
+		{
+			sscanf(position2, "%f:%f", &x, &y);
+			// printf("x = %.2f\n", x);
+			// printf("y = %.2f\n", y);
+			gs->player2.pos.x = x;
+			gs->player2.pos.y = y;
+		}
 	}
 }
 int counter = 0;
