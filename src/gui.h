@@ -1,24 +1,22 @@
 #ifndef _GUI_H_
 #define _GUI_H_
+#include <string>
+#include <vector>
 
-typedef struct {
-    char lable[64];
-} GuiButton;
+struct GuiButton {
+    std::string lable;
+};
 
-typedef struct {
-    int count;
-    int capacity;
-    GuiButton* items;
-} GuiPage;
+struct GuiPage {
+    std::vector<GuiButton> buttons;
+};
 
-typedef struct {
+struct Gui {
     int sel_button;
     int sel_page;
 
-    int count;
-    int capacity;
-    GuiPage* items;
-} Gui;
+    std::vector<GuiPage> items;
+};
 
 void GUIInit(Gui* gui);
 void GUIDraw(Gui gui);

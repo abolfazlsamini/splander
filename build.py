@@ -2,13 +2,13 @@ import os
 import sys
 import subprocess
 
-CC = "gcc"
+CC = "g++"
 if sys.platform == 'win32':
     print()
     print("[WARNING]: Set MINGW path in envitemet variables")
     print("Default path: C:\\raylib\\w64devkit\\bin")
     print()
-    CC = "gcc"
+    CC = "g++"
 
 PROJECT_NAME = "splander"
 PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -52,7 +52,7 @@ else:
 SRC_FILES = []
 for root, dirs, files in os.walk(SRC_PATH):
     for file in files:
-        if file.endswith(".c"):
+        if file.endswith(".cpp"):
             src = os.path.join(PROJECT_DIR, root, file)
             SRC_FILES.append(src)
 
