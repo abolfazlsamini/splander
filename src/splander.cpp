@@ -6,13 +6,13 @@
 #include "steam/steam_api.h"
 #if defined(_WIN32) || defined(_WIN64)
 #define WIN32_LEAN_AND_MEAN
-#define NOMINMAX // Prevent Windows from defining min/max macros
+// #define NOMINMAX // Prevent Windows from defining min/max macros
 #define NOGDI	 // Exclude GDI symbols (e.g., Rectangle)
 #define NOUSER	 // Exclude User symbols (e.g., ShowCursor)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <C:\raylib\raylib\src\raylib.h>
-// #undef CloseWindow
+#include <iostream>
 #else
 #include "raylib.h"
 #include <sys/socket.h>
@@ -53,6 +53,8 @@ typedef int SOCKET;
 SOCKET client_socket;
 #endif
 struct sockaddr_in server;
+char buffer[BUFFER_SIZE];
+char NAME[] = "Sam"; //TODO when testing, one client should be "Sam" but the other one can be anything
 
 void init_socket()
 {
@@ -96,8 +98,7 @@ void close_socket(int c_socket)
 }
 #endif
 
-char buffer[BUFFER_SIZE];
-char name[] = "Sam";
+
 int main()
 {
     // Initialize sock
@@ -113,7 +114,7 @@ int main()
 
     InitWindow(screenWidth, screenHeight, "Splander");
     SetExitKey(KEY_F1);
-    SetTargetFPS(20);
+    SetTargetFPS(60);
 
     GameState gs = {0};
     GUIInit(&gs.gui);
@@ -148,7 +149,7 @@ void GUIFunctionEval(GameState *gs)
                 gs->is_paused = !gs->is_paused;
                 char new_name[16];
                 strcpy(new_name, "name:");
-                strcat(new_name, name);
+                strcat(new_name, NAME);
                 if (sendto(client_socket, new_name, 8, 0, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
                 {
                     printf("sendto() failed. Error\n");
@@ -172,46 +173,65 @@ void GUIFunctionEval(GameState *gs)
 struct timeval milli_time;
 double millisec = 0;
 time_t currentTime;
+SYSTEMTIME st;
+unsigned long long SystemTimeToEpochMillis(const SYSTEMTIME& st) {
+    FILETIME ft;
+    SystemTimeToFileTime(&st, &ft);
+
+    // Convert FILETIME to ULARGE_INTEGER
+    ULARGE_INTEGER ull;
+    ull.LowPart = ft.dwLowDateTime;
+    ull.HighPart = ft.dwHighDateTime;
+
+    const unsigned long long EPOCH_OFFSET = 116444736000000000ULL;
+    return (ull.QuadPart - EPOCH_OFFSET) / 10000ULL;
+}//TODO not sure if this gives the same time as the linux in windows is something like this: 1739270417128
+
 static void UpdateServer(GameState *gs)
 {
     time(&currentTime);
 
 #if defined(_WIN32) || defined(_WIN64)
-    mingw_gettimeofday(&milli_time, NULL);
+
+     SYSTEMTIME st;
+    GetLocalTime(&st);
+
+    unsigned long long epoch_time = SystemTimeToEpochMillis(st);
+	 std::cout << "Current Epoch Time: " << epoch_time << std::endl;
+
+    char send_data[240];
+    char sent_time_str[100];
+
 #else
     gettimeofday(&milli_time, NULL);
-#endif
     millisec = (double)(milli_time.tv_usec);
 
     char send_data[240];
     char sent_time_str[100];
 
     long long epoch_time = (long long)currentTime * 1000 + (long long)millisec;
+#endif
     sprintf(sent_time_str, "%lld", epoch_time);
     // name,time,position
-    sprintf(send_data, "%s,%s,%.2f:%.2f", name, sent_time_str, gs->player.pos.x, gs->player.pos.y);
+    sprintf(send_data, "%s,%s,%.2f:%.2f", NAME, sent_time_str, gs->player.pos.x, gs->player.pos.y);
     printf("data sent: %s\n", send_data);
 
     // put all syncy data here  V
     if (sendto(client_socket, send_data, (int)strlen(send_data), 0, (struct sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
     {
-        printf("sendto() failed. Error\n");
+        // printf("sendto() failed. Error\n");
         close_socket(client_socket);
     }
 }
 long long prev_time_from_server = 0;
 static void UpdateClient(GameState *gs)
 {
-    if (sendto(client_socket, "hello\n", 6, 0, (struct sockaddr *)&server, sizeof(server)) < 0)
-    {
-        printf("sendto() failed. Error\n");
-    }
     int recv_len;
     struct sockaddr_in client_addr;
     socklen_t client_len = sizeof(client_addr);
     if ((recv_len = recvfrom(client_socket, buffer, BUFFER_SIZE, 0, (struct sockaddr *)&client_addr, &client_len)) <= 0)
     {
-        printf("recvfrom() failed. Error\n");
+        // printf("recvfrom() failed. Error\n");
     }
     else
     {
@@ -219,26 +239,38 @@ static void UpdateClient(GameState *gs)
         printf("Recieved: %s\n", buffer);
     }
 
-    char receivdata[] = "m,1234654654,1:0;s,132165486768,35:35";
     char name[100], position[100];
     long long time;
-
-    sscanf(receivdata, "%[^,],%lld,%s", name, &time, position);
-
+    char name2[100], position2[100];
+	long long time2;
+    int resolts = sscanf(buffer, "%[^,],%lld,%[^;];%[^,],%lld,%s", name, &time, position, name2, &time2, position2);
     float x, y;
     if (prev_time_from_server <= 0)
     {
-        sscanf(position, "%f:%f", &x, &y);
-        // printf("x = %.2f\n", x);
-        // printf("y = %.2f\n", y);
-        gs->player2.pos.x = x;
-        gs->player2.pos.y = y;
+        if (strcmp(name, NAME) != 0)
+		{
+			sscanf(position, "%f:%f", &x, &y);
+			gs->player2.pos.x = x;
+			gs->player2.pos.y = y;
+		}
+		else
+		{
+			sscanf(position2, "%f:%f", &x, &y);
+			gs->player2.pos.x = x;
+			gs->player2.pos.y = y;
+            }
     }
 }
 // Update and draw game frame
+int counter = 0;
 static void UpdateDrawFrame(GameState *gs)
 {
+	if(counter % 10 == 0)
+	{
+
     UpdateClient(gs);
+	UpdateServer(gs);
+	}counter++;
     if (!gs->is_paused)
     {
         if (IsKeyDown(KEY_RIGHT))
@@ -249,12 +281,6 @@ static void UpdateDrawFrame(GameState *gs)
             gs->player.pos.y -= 2.0f;
         if (IsKeyDown(KEY_DOWN))
             gs->player.pos.y += 2.0f;
-
-        if (IsKeyDown(KEY_RIGHT) ||
-                IsKeyDown(KEY_LEFT) ||
-                IsKeyDown(KEY_UP) ||
-                IsKeyDown(KEY_DOWN))
-            UpdateServer(gs);
     }
 
     else

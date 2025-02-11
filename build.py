@@ -27,8 +27,8 @@ RAYLIB_INCLUDE_PATH = RAYLIB_SRC_PATH
 RAYLIB_LIB_PATH = RAYLIB_SRC_PATH
 
 PROJECT_CUSTOM_FLAGS = []
-CFLAGS = ["-Wall", "-std=c99", "-D_DEFAULT_SOURCE", "-Wno-missing-braces"]
-CFLAGS += ["-Wno-unused-value", "-Wno-pointer-sign"]
+CFLAGS = ["-Wall", "-D_DEFAULT_SOURCE", "-Wno-missing-braces"]
+CFLAGS += ["-Wno-unused-value"]
 CFLAGS += PROJECT_CUSTOM_FLAGS
 
 INCLUDE_PATHS = ["-I.", "-Iexternal", f"-I{RAYLIB_INCLUDE_PATH}"]
