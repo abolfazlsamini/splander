@@ -46,7 +46,7 @@ fn who_is_in_lobby(){
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let socket = UdpSocket::bind("127.0.0.1:8080").await?;
+    let socket = UdpSocket::bind("127.0.0.1:6969").await?;
     let mut buf = [0; 1024];
     let mut lobby = Lobby::new();
 

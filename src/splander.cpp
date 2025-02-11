@@ -4,6 +4,7 @@
 #include "gui.h"
 #include <time.h>
 #include "steam/steam_api.h"
+#include "utils.h"
 #if defined(_WIN32) || defined(_WIN64)
 #define WIN32_LEAN_AND_MEAN
 // #define NOMINMAX // Prevent Windows from defining min/max macros
@@ -26,7 +27,7 @@
 // #pragma comment(lib, "ws2_32.lib") // Link with ws2_32.lib
 
 #define SERVER_IP "127.0.0.1"
-#define PORT 8080
+#define PORT 6969
 #define BUFFER_SIZE 1024
 
 typedef struct
@@ -170,50 +171,12 @@ void GUIFunctionEval(GameState *gs)
     }
 }
 
-struct timeval milli_time;
-double millisec = 0;
-time_t currentTime;
-SYSTEMTIME st;
-unsigned long long SystemTimeToEpochMillis(const SYSTEMTIME& st) {
-    FILETIME ft;
-    SystemTimeToFileTime(&st, &ft);
-
-    // Convert FILETIME to ULARGE_INTEGER
-    ULARGE_INTEGER ull;
-    ull.LowPart = ft.dwLowDateTime;
-    ull.HighPart = ft.dwHighDateTime;
-
-    const unsigned long long EPOCH_OFFSET = 116444736000000000ULL;
-    return (ull.QuadPart - EPOCH_OFFSET) / 10000ULL;
-}//TODO not sure if this gives the same time as the linux in windows is something like this: 1739270417128
 
 static void UpdateServer(GameState *gs)
 {
-    time(&currentTime);
-
-#if defined(_WIN32) || defined(_WIN64)
-
-     SYSTEMTIME st;
-    GetLocalTime(&st);
-
-    unsigned long long epoch_time = SystemTimeToEpochMillis(st);
-	 std::cout << "Current Epoch Time: " << epoch_time << std::endl;
-
     char send_data[240];
-    char sent_time_str[100];
-
-#else
-    gettimeofday(&milli_time, NULL);
-    millisec = (double)(milli_time.tv_usec);
-
-    char send_data[240];
-    char sent_time_str[100];
-
-    long long epoch_time = (long long)currentTime * 1000 + (long long)millisec;
-#endif
-    sprintf(sent_time_str, "%lld", epoch_time);
     // name,time,position
-    sprintf(send_data, "%s,%s,%.2f:%.2f", NAME, sent_time_str, gs->player.pos.x, gs->player.pos.y);
+    sprintf(send_data, "%s,%ld,%.2f:%.2f", NAME, GetTimeMs64(), gs->player.pos.x, gs->player.pos.y);
     printf("data sent: %s\n", send_data);
 
     // put all syncy data here  V
@@ -265,12 +228,12 @@ static void UpdateClient(GameState *gs)
 int counter = 0;
 static void UpdateDrawFrame(GameState *gs)
 {
-	if(counter % 10 == 0)
+	if (counter % 10 == 0)
 	{
-
-    UpdateClient(gs);
-	UpdateServer(gs);
-	}counter++;
+        UpdateServer(gs);
+        UpdateClient(gs);
+	}
+    counter++;
     if (!gs->is_paused)
     {
         if (IsKeyDown(KEY_RIGHT))
