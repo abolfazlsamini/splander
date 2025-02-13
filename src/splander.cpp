@@ -205,7 +205,10 @@ static void UpdateClient(GameState *gs)
     }
 
     char name[100], position[100];
-    char position2[100];
+    long long time;
+    char name2[100], position2[100];
+    long long time2;
+    sscanf(buffer, "%[^,],%lld,%[^;];%[^,],%lld,%s", name, &time, position, name2, &time2, position2);
     float x, y;
     if (prev_time_from_server <= 0)
     {
@@ -258,7 +261,7 @@ static void UpdateDrawFrame(GameState *gs)
         if (IsKeyPressed(KEY_DOWN))
         {
             gs->gui.sel_button += 1;
-            if ((uint64_t) gs->gui.sel_button >= gs->gui.items[gs->gui.sel_page].buttons.size())
+            if ((uint64_t)gs->gui.sel_button >= gs->gui.items[gs->gui.sel_page].buttons.size())
             {
                 gs->gui.sel_button = 0;
             }
