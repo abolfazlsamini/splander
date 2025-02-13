@@ -32,7 +32,7 @@ PLATFORM              ?= PLATFORM_DESKTOP
 PROJECT_NAME          ?= splander
 PROJECT_VERSION       ?= 1.0
 PROJECT_BUILD_PATH    ?= .
-PROJECT_SOURCE_FILES  ?= splander.c
+PROJECT_SOURCE_FILES  ?= splander.cpp
 
 RAYLIB_SRC_PATH       ?= C:\raylib\raylib\src
 RAYLIB_INCLUDE_PATH   ?= $(RAYLIB_SRC_PATH)
@@ -76,7 +76,7 @@ endif
 
 # Define default C compiler: CC
 #------------------------------------------------------------------------------------------------
-CC = gcc
+CC = g++
 
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),OSX)
@@ -168,9 +168,9 @@ endif
 # Define all object files from source files
 #------------------------------------------------------------------------------------------------
 rwildcard = $(foreach d,$(wildcard $(1:=/*)),$(call rwildcard,$d,$2) $(filter $(subst *,%,$2),$d))
-SRC = $(call rwildcard,./,*.c)
-OBJS = $(patsubst %.c, $(PROJECT_BUILD_PATH)/%.o, $(SRC))
-# OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
+SRC = $(call rwildcard,./,*.cpp)
+OBJS = $(patsubst %.cpp, $(PROJECT_BUILD_PATH)/%.o, $(SRC))
+# OBJS = $(patsubst %.cpp, %.o, $(PROJECT_SOURCE_FILES))
 
 
 # Define processes to execute
@@ -185,7 +185,7 @@ $(PROJECT_NAME): $(OBJS)
 
 # Compile source files
 # NOTE: This pattern will compile every module defined on $(OBJS)
-$(PROJECT_BUILD_PATH)/%.o: %.c
+$(PROJECT_BUILD_PATH)/%.o: %.cpp
 	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
 
 # Clean everything

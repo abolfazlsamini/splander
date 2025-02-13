@@ -1,3 +1,4 @@
+#include <cstdint>
 #if defined(_WIN32) || defined(_WIN64)
 #include <C:\raylib\raylib\src\raylib.h>
 #else
@@ -23,7 +24,7 @@ void GUIDraw(Gui gui) {
 
     GuiPage page = gui.items[gui.sel_page];
     int text_line = 50;
-    for (int i = 0; i < page.buttons.size(); i++) {
+    for (int i = 0;(uint64_t) i < page.buttons.size(); i++) {
         Color btn_color = WHITE;
         if (gui.sel_button == i) {
             btn_color = BLUE;

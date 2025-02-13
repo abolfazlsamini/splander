@@ -1,8 +1,8 @@
+#include <cstdint>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "gui.h"
-#include <time.h>
 #include "steam/steam_api.h"
 #include "utils.h"
 #if defined(_WIN32) || defined(_WIN64)
@@ -116,6 +116,8 @@ int main()
     InitWindow(screenWidth, screenHeight, "Splander");
     SetExitKey(KEY_F1);
     SetTargetFPS(60);
+    
+    SteamAPI_Init();
 
     GameState gs = {0};
     GUIInit(&gs.gui);
@@ -203,36 +205,33 @@ static void UpdateClient(GameState *gs)
     }
 
     char name[100], position[100];
-    long long time;
-    char name2[100], position2[100];
-	long long time2;
-    int resolts = sscanf(buffer, "%[^,],%lld,%[^;];%[^,],%lld,%s", name, &time, position, name2, &time2, position2);
+    char position2[100];
     float x, y;
     if (prev_time_from_server <= 0)
     {
         if (strcmp(name, NAME) != 0)
-		{
-			sscanf(position, "%f:%f", &x, &y);
-			gs->player2.pos.x = x;
-			gs->player2.pos.y = y;
-		}
-		else
-		{
-			sscanf(position2, "%f:%f", &x, &y);
-			gs->player2.pos.x = x;
-			gs->player2.pos.y = y;
-            }
+        {
+            sscanf(position, "%f:%f", &x, &y);
+            gs->player2.pos.x = x;
+            gs->player2.pos.y = y;
+        }
+        else
+        {
+            sscanf(position2, "%f:%f", &x, &y);
+            gs->player2.pos.x = x;
+            gs->player2.pos.y = y;
+        }
     }
 }
 // Update and draw game frame
 int counter = 0;
 static void UpdateDrawFrame(GameState *gs)
 {
-	if (counter % 10 == 0)
-	{
+    if (counter % 10 == 0)
+    {
         UpdateServer(gs);
         UpdateClient(gs);
-	}
+    }
     counter++;
     if (!gs->is_paused)
     {
@@ -259,7 +258,7 @@ static void UpdateDrawFrame(GameState *gs)
         if (IsKeyPressed(KEY_DOWN))
         {
             gs->gui.sel_button += 1;
-            if (gs->gui.sel_button >= gs->gui.items[gs->gui.sel_page].buttons.size())
+            if ((uint64_t) gs->gui.sel_button >= gs->gui.items[gs->gui.sel_page].buttons.size())
             {
                 gs->gui.sel_button = 0;
             }

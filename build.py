@@ -41,8 +41,10 @@ if sys.platform == 'win32':
 if sys.platform == 'win32':
     LDLIBS = ["-lraylib", "-lopengl32", "-lgdi32", "-lwinmm", "-lcomdlg32", "-lws2_32"]
     LDLIBS += ["-static", "-lpthread", "-lole32"]
+    LDLIBS += ["-L./libs/win64", "-l:libsteam_api.dll"]
 else:
     LDLIBS = ["-lraylib", "-lGL", "-lm", "-lpthread", "-ldl", "-lrt"]
+    LDLIBS += ["-L./libs/linux64", "-l:libsteam_api.so"]
     if use_x11:
         LDLIBS += "-lX11"
     else:
